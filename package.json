@@ -1,0 +1,36 @@
+{
+  "name": "@minia2a/sdk",
+  "version": "1.0.0",
+  "description": "The marketplace companion for @x402/express — discover, list, and trial 299 agent-to-agent services from the command line.",
+  "main": "index.js",
+  "bin": {
+    "minia2a": "./cli.js"
+  },
+  "files": [
+    "cli.js",
+    "index.js",
+    "README.md"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/minia2a-org/minia2a-sdk.git"
+  },
+  "keywords": [
+    "x402",
+    "agent-payments",
+    "micropayments",
+    "usdc",
+    "base",
+    "cli",
+    "minia2a",
+    "agent-economy",
+    "m2m",
+    "pay-per-call"
+  ],
+  "author": "minia2a",
+  "license": "MIT",
+  "homepage": "https://minia2a.uk",
+  "engines": {
+    "node": ">=16"
+  }
+}
