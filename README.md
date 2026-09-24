@@ -44,7 +44,7 @@ Your service gets:
 - Listed in the 1,680+-service catalog on [minia2a.uk](https://minia2a.uk)
 - Free trial traffic from agent developers
 - USDC revenue on Base — direct to your wallet
-- 5% marketplace fee only on paid calls
+- 5% platform fee — 0% through 2026
 
 ## Programmatic API
 
@@ -52,12 +52,25 @@ Your service gets:
 const { discover, getServices, trial, stats } = require('@minia2a/sdk');
 
 const matches = await discover('captcha');
-console.log(matches[0].name); // "CAPTCHA Solver"
+console.log(matches[0].name); // "Captcha Solve"
 
-const { body } = await trial('x402-gas');
-console.log(body);
+// Without a signed wallet this is an unpaid call: it returns the endpoint's
+// 402 payment challenge (ok === false). It does not draw a free trial.
+const { status, body } = await trial('x402-gas');
+console.log(status); // 402
 
-const { services, walletUsers } = await stats();
+// Draw one of the wallet's 5 free trials by signing
+//   "minia2a trial:<wallet>:<serviceId>:<unixSeconds>"   (EIP-191)
+const ts = Math.floor(Date.now() / 1000);
+const { ok, trialRemaining } = await trial('x402-gas', {
+  wallet,
+  signature: sign(`minia2a trial:${wallet}:x402-gas:${ts}`),
+  timestamp: ts,
+});
+console.log(ok, trialRemaining); // true '4'
+
+const marketplace = await stats();
+console.log(marketplace.services, marketplace.trials.walletUsers);
 ```
 
 ## Links

@@ -146,12 +146,22 @@ async function list() {
   footer();
 }
 
-async function trial(serviceId) {
+async function trial(serviceId, flags = []) {
   if (!serviceId || serviceId.trim() === "") {
-    console.error("Usage: minia2a trial <service-id>");
-    console.error("Example: minia2a trial x402-gas\n");
+    console.error("Usage: minia2a trial <service-id> [--wallet 0x.. --signature 0x.. --timestamp <unixSec>]");
+    console.error("Example: minia2a trial x402-gas --wallet 0xYourWallet --signature 0xSig --timestamp 1758700000\n");
+    console.error("A signed wallet draws from its 5 free trial calls. Without a signature this command");
+    console.error("only shows the endpoint's 402 payment challenge — it cannot draw a trial.\n");
     process.exit(1);
   }
+
+  const opt = (name) => {
+    const i = flags.indexOf(`--${name}`);
+    return i >= 0 ? flags[i + 1] : undefined;
+  };
+  const wallet = opt("wallet");
+  const signature = opt("signature");
+  const ts = String(opt("timestamp") || Math.floor(Date.now() / 1000));
 
   console.log(`\n🧪 ${serviceId} — trial mode\n`);
 
@@ -169,34 +179,55 @@ async function trial(serviceId) {
   const price = svc.priceCents != null
     ? `$${(svc.priceCents / 100).toFixed(3).replace(/0+$/, "").replace(/\.$/, "")}`
     : "?";
-  const trialEndpoint = `${svc.endpoint}?trial=1`;
+  const url = new URL(svc.endpoint);
+  const headers = {};
+  if (wallet) {
+    url.searchParams.set("wallet", wallet);
+    headers["X-Wallet-Signature"] = signature || "";
+    headers["X-Trial-Timestamp"] = ts;
+  }
 
   console.log(`  Service:    ${svc.name}`);
   console.log(`  Price:      ${price}/call`);
   console.log(`  Endpoint:   ${svc.endpoint}`);
-  console.log(`  Trial URL:  ${trialEndpoint}`);
+  console.log(
+    wallet
+      ? `  Trial:      signed wallet ${wallet}`
+      : "  Trial:      NOT SIGNED — this call returns the 402 challenge, not a trial"
+  );
   console.log(`  About:      ${svc.description?.slice(0, 120) || ""}...`);
   console.log();
 
+  if (!wallet) {
+    console.log("  A trial needs a signed wallet (no registration). The message is:");
+    console.log(`    minia2a trial:${wallet || "<wallet>"}:${serviceId}:${ts}      (EIP-191 personal_sign)`);
+    console.log(`    minia2a trial ${serviceId} --wallet 0x.. --signature 0x.. --timestamp ${ts}`);
+    console.log("  Note: serviceId is the catalog id (x402-gas), not the URL path segment (gas).");
+    console.log();
+  }
+
   console.log("  curl example:");
-  console.log(`    curl -s '${trialEndpoint}'`);
+  console.log(`    curl -s '${url}'${wallet ? ` \\\n      -H 'X-Wallet-Signature: ${signature}' \\\n      -H 'X-Trial-Timestamp: ${ts}'` : ""}`);
   console.log();
 
-  // Actually call the trial endpoint
   console.log("  Trying now...\n");
   try {
     const start = Date.now();
-    const res = await fetch(trialEndpoint);
+    const res = await fetch(url, { headers });
     const elapsed = Date.now() - start;
     const body = await res.text();
     const preview = body.length > 300 ? body.slice(0, 300) + "..." : body;
+    const remaining = res.headers.get("x-trial-remaining");
 
     console.log(`  Status:  ${res.status} ${res.statusText} (${elapsed}ms)`);
+    if (remaining != null) {
+      console.log(`  Trial calls remaining: ${remaining} of ${res.headers.get("x-trial-max") || 5}`);
+    }
     console.log(`  Response: ${preview}`);
     console.log();
   } catch (err) {
-    console.log(`  ⚠  Could not reach trial endpoint: ${err.message}`);
-    console.log(`  Try manually: curl -s '${trialEndpoint}'\n`);
+    console.log(`  ⚠  Could not reach the endpoint: ${err.message}`);
+    console.log(`  Try manually: curl -s '${url}'\n`);
   }
 
   footer();
@@ -233,22 +264,26 @@ async function publish() {
 ║       List Your x402 Endpoint on minia2a.uk                  ║
 ╠══════════════════════════════════════════════════════════════╣
 ║                                                              ║
-║  Already using @x402/express or @minia2a/x402-express?       ║
-║  Register your endpoint in one command:                      ║
+║  Serving your own x402 endpoint? Registering lists your      ║
+║  wallet for publishing — it is NOT the trial gate. The 5     ║
+║  free calls come from signing on the call itself.            ║
+║                                                              ║
+║  Sign the string  minia2a register: <your-wallet>  with      ║
+║  EIP-191 personal_sign, then:                                ║
 ║                                                              ║
 ║    curl -X POST https://minia2a.uk/api/v1/register-simple    ║
 ║      -H "Content-Type: application/json"                     ║
 ║      -d '{                                                   ║
-║        "agentName":"my-service",                             ║
-║        "endpoint":"https://my-api.com/x402/ai-summary",      ║
-║        "description":"AI summary service — $0.01/call"       ║
+║        "name":"my-service",                                  ║
+║        "wallet":"0x...",                                     ║
+║        "signature":"0x..."                                   ║
 ║      }'                                                      ║
 ║                                                              ║
 ║  Your service gets:                                          ║
 ║  • Listed in the 1,680+-service catalog                      ║
 ║  • Free trial traffic from agent developers                  ║
 ║  • USDC revenue on Base — direct to your wallet              ║
-║  • 5% marketplace fee only on paid calls                     ║
+║  • 5% platform fee — 0% through 2026                         ║
 ║                                                              ║
 ║  Docs: https://minia2a.uk/docs                               ║
 ║                                                              ║
@@ -274,7 +309,7 @@ async function main() {
       break;
     case "trial":
     case "try":
-      await trial(args[1] || "");
+      await trial(args[1] || "", args.slice(2));
       break;
     case "register":
     case "signup":

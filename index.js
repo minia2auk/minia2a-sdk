@@ -55,17 +55,45 @@ async function getService(id) {
 }
 
 /**
- * Make a trial call to a service endpoint.
+ * Call a service endpoint and return the raw response.
+ *
+ * Without a signed wallet this is a plain unpaid call: you get the endpoint's
+ * 402 payment challenge back (status 402, ok false). It does NOT draw a free
+ * trial — trials are drawn by a signed wallet, not by a URL parameter.
+ * Appending a bare `?trial=1` does nothing; this function used to do exactly
+ * that and returned a 402 under a "trial call" docstring.
+ *
+ * Pass a signed wallet to draw from its 5-call trial allowance (one allowance
+ * for the whole catalog, shared across endpoints):
+ *
+ *   const ts = Math.floor(Date.now() / 1000);
+ *   const message = `minia2a trial:${wallet}:${serviceId}:${ts}`;
+ *   const signature = <EIP-191 personal_sign of message>;
+ *   await trial("x402-gas", { wallet, signature, timestamp: ts });
+ *
+ * `serviceId` must be the `id` field from /api/services (e.g. "x402-gas"),
+ * not the URL path segment — signing "gas" returns 402 every time.
+ * A served trial replies with `x-trial-remaining` / `x-trial-max` headers.
  */
-async function trial(serviceId) {
+async function trial(serviceId, opts = {}) {
   const svc = await getService(serviceId);
   if (!svc) throw new Error(`Service "${serviceId}" not found`);
 
-  const res = await fetch(`${svc.endpoint}?trial=1`);
+  const url = new URL(svc.endpoint);
+  const headers = {};
+  if (opts.wallet) {
+    const ts = String(opts.timestamp || Math.floor(Date.now() / 1000));
+    url.searchParams.set("wallet", opts.wallet);
+    headers["X-Wallet-Signature"] = opts.signature;
+    headers["X-Trial-Timestamp"] = ts;
+  }
+
+  const res = await fetch(url, { headers });
   return {
     service: svc,
     status: res.status,
     ok: res.ok,
+    trialRemaining: res.headers.get("x-trial-remaining"),
     body: await res.text(),
   };
 }
