@@ -15,7 +15,7 @@ async function fetchJSON(path) {
 
 /**
  * Search services by keyword query.
- * Returns scored & sorted matches from the 299-service catalog.
+ * Returns scored & sorted matches from the 1,680+-service catalog.
  */
 async function discover(query) {
   const data = await fetchJSON("/api/services");

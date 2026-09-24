@@ -1,7 +1,7 @@
 {
   "name": "@minia2a/sdk",
-  "version": "1.0.0",
-  "description": "The marketplace companion for @x402/express — discover, list, and trial 299 agent-to-agent services from the command line.",
+  "version": "1.0.5",
+  "description": "The marketplace companion for @x402/express — discover, list, and trial 1,680+ agent-to-agent services from the command line.",
   "main": "index.js",
   "bin": {
     "minia2a": "./cli.js"

@@ -3,7 +3,11 @@
  * minia2a CLI — The marketplace companion for @x402/express
  *
  * Discover, list, and trial agent-to-agent x402 services.
- * 299 services, USDC on Base, zero API keys.
+ * USDC on Base, zero API keys.
+ *
+ * The catalog size is deliberately not stated here: it changes weekly and a
+ * literal in a published tarball cannot be corrected once installed. `discover`
+ * and `list` print live results; that is the only trustworthy count.
  */
 
 const BASE_URL = "https://minia2a.uk";
@@ -30,7 +34,7 @@ async function fetchJSON(path) {
 
 function footer() {
   console.log("\n" + "─".repeat(50));
-  console.log("Powered by minia2a.uk — 299 services, USDC on Base");
+  console.log("Powered by minia2a.uk — pay-per-call x402 APIs, USDC on Base");
   console.log("─".repeat(50) + "\n");
 }
 
@@ -39,10 +43,10 @@ function usage() {
   minia2a <command> [args]
 
   Commands:
-    discover <query>   Search the 299-service marketplace
+    discover <query>   Search the 1,680+-service marketplace
     list               Show popular x402 services
     trial <service>    Get trial instructions for a service
-    register           Register your agent (500 free credits)
+    register           Register a wallet for publishing (trials need none)
 
   Examples:
     minia2a discover "gas price"
@@ -201,19 +205,23 @@ async function trial(serviceId) {
 async function register() {
   console.log(`
 ╔══════════════════════════════════════════════════════════════╗
-║           Register Your Agent on minia2a.uk                 ║
+║           Register Your Agent on minia2a.uk                  ║
 ╠══════════════════════════════════════════════════════════════╣
-║                                                            ║
-║  To register and get 500 free credits ($2.50 value):       ║
-║                                                            ║
-║    curl -X POST https://minia2a.uk/api/v1/register-simple  ║
-║      -H "Content-Type: application/json"                   ║
-║      -d '{"agentName":"your-agent-name"}'                  ║
-║                                                            ║
-║  Already registered? Check your stats:                     ║
-║                                                            ║
-║    curl -s https://minia2a.uk/api/stats                     ║
-║                                                            ║
+║                                                              ║
+║  Free trial calls need no registration. Sign a wallet:       ║
+║                                                              ║
+║    TS=$(date +%s)                                            ║
+║    sign EIP-191 "minia2a trial:<wallet>:<svc-id>:$TS"        ║
+║    curl "https://minia2a.uk/x402/<svc>?wallet=0x..."         ║
+║      header X-Wallet-Signature: 0x...                        ║
+║      header X-Trial-Timestamp: $TS                           ║
+║                                                              ║
+║  Registering is for publishing services, not for trials:     ║
+║                                                              ║
+║  Already registered? Check your stats:                       ║
+║                                                              ║
+║    curl -s https://minia2a.uk/api/stats                      ║
+║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
 `);
   footer();
@@ -222,28 +230,28 @@ async function register() {
 async function publish() {
   console.log(`
 ╔══════════════════════════════════════════════════════════════╗
-║       List Your x402 Endpoint on minia2a.uk                 ║
+║       List Your x402 Endpoint on minia2a.uk                  ║
 ╠══════════════════════════════════════════════════════════════╣
-║                                                            ║
-║  Already using @x402/express or @minia2a/x402-express?     ║
-║  Register your endpoint in one command:                    ║
-║                                                            ║
-║    curl -X POST https://minia2a.uk/api/v1/register-simple  ║
-║      -H "Content-Type: application/json"                   ║
-║      -d '{                                                ║
-║        "agentName":"my-service",                           ║
-║        "endpoint":"https://my-api.com/x402/ai-summary",    ║
-║        "description":"AI summary service — $0.01/call"     ║
-║      }'                                                   ║
-║                                                            ║
-║  Your service gets:                                        ║
-║  • Listed in the 299-service catalog                       ║
-║  • Free trial traffic from agent developers                ║
-║  • USDC revenue on Base — direct to your wallet            ║
-║  • 5% marketplace fee only on paid calls                   ║
-║                                                            ║
-║  Docs: https://minia2a.uk/docs                             ║
-║                                                            ║
+║                                                              ║
+║  Already using @x402/express or @minia2a/x402-express?       ║
+║  Register your endpoint in one command:                      ║
+║                                                              ║
+║    curl -X POST https://minia2a.uk/api/v1/register-simple    ║
+║      -H "Content-Type: application/json"                     ║
+║      -d '{                                                   ║
+║        "agentName":"my-service",                             ║
+║        "endpoint":"https://my-api.com/x402/ai-summary",      ║
+║        "description":"AI summary service — $0.01/call"       ║
+║      }'                                                      ║
+║                                                              ║
+║  Your service gets:                                          ║
+║  • Listed in the 1,680+-service catalog                      ║
+║  • Free trial traffic from agent developers                  ║
+║  • USDC revenue on Base — direct to your wallet              ║
+║  • 5% marketplace fee only on paid calls                     ║
+║                                                              ║
+║  Docs: https://minia2a.uk/docs                               ║
+║                                                              ║
 ╚══════════════════════════════════════════════════════════════╝
 `);
   footer();
