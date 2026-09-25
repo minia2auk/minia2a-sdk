@@ -5,11 +5,71 @@
  *   const { discover, getServices, trial } = require('@minia2a/sdk');
  */
 
+const crypto = require("crypto");
+const fs = require("fs");
+const os = require("os");
+const path = require("path");
+
 const BASE_URL = "https://minia2a.uk";
 
-async function fetchJSON(path) {
-  const res = await fetch(`${BASE_URL}${path}`);
-  if (!res.ok) throw new Error(`minia2a API: HTTP ${res.status} from ${path}`);
+// ── Agent identity ──────────────────────────────────────────────────
+// Sent on first-party requests so the gateway can count distinct agents; the
+// server stores only HMAC(secret, id), never the raw value. Identity is
+// per-machine, not per-process — a per-process id would count every invocation
+// as a new agent and inflate the adoption metric it feeds.
+let _agentIdResolved = false;
+let _agentIdCache = null;
+
+function agentId() {
+  if (_agentIdResolved) return _agentIdCache;
+  _agentIdResolved = true;
+  const fromEnv = process.env.MINIA2A_AGENT_ID;
+  if (fromEnv) return (_agentIdCache = fromEnv);
+  // Two locations exist across our published clients: the `minia2a` package reads
+  // ~/.minia2a-agent-id (the path the gateway's adoption.go names) and
+  // `minia2a-cli` reads ~/.minia2a/agent-id. Read both, in that order, so a
+  // machine that already has an id from either client keeps one identity instead
+  // of being counted twice; create the gateway-documented one.
+  const candidates = [
+    path.join(os.homedir(), ".minia2a-agent-id"),
+    path.join(os.homedir(), ".minia2a", "agent-id"),
+  ];
+  for (const file of candidates) {
+    try {
+      const existing = fs.readFileSync(file, "utf8").trim();
+      if (existing) return (_agentIdCache = existing);
+    } catch (e) { /* not created yet — fall through to the next candidate */ }
+  }
+  const id = "agent:" + crypto.randomUUID();
+  try {
+    fs.writeFileSync(candidates[0], id, { mode: 0o600 });
+    return (_agentIdCache = id);
+  } catch (e) {
+    return (_agentIdCache = null);
+  }
+}
+
+// The id identifies us to our own gateway. A catalog entry can point off-domain
+// (the external-api category), so the header is gated on the host: a stable
+// per-machine identifier must not travel to a third party.
+function isFirstParty(url) {
+  try {
+    const h = new URL(url).hostname;
+    return h === "minia2a.uk" || h.endsWith(".minia2a.uk");
+  } catch (e) {
+    return false;
+  }
+}
+
+function identityHeaders(url) {
+  const id = isFirstParty(url) ? agentId() : null;
+  return id ? { "X-Agent-ID": id } : {};
+}
+
+async function fetchJSON(pathname) {
+  const url = `${BASE_URL}${pathname}`;
+  const res = await fetch(url, { headers: identityHeaders(url) });
+  if (!res.ok) throw new Error(`minia2a API: HTTP ${res.status} from ${pathname}`);
   return res.json();
 }
 
@@ -88,7 +148,7 @@ async function trial(serviceId, opts = {}) {
     headers["X-Trial-Timestamp"] = ts;
   }
 
-  const res = await fetch(url, { headers });
+  const res = await fetch(url, { headers: { ...identityHeaders(url), ...headers } });
   return {
     service: svc,
     status: res.status,
@@ -105,4 +165,7 @@ async function stats() {
   return fetchJSON("/api/stats");
 }
 
-module.exports = { discover, getServices, getService, trial, stats };
+// `_identityHeaders` is underscore-prefixed: it is here so cli.js (same package)
+// shares one id-resolution path instead of carrying a second copy that can drift
+// from this one. It is not part of the supported API.
+module.exports = { discover, getServices, getService, trial, stats, _identityHeaders: identityHeaders };

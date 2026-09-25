@@ -10,12 +10,14 @@
  * and `list` print live results; that is the only trustworthy count.
  */
 
+const { _identityHeaders } = require("./index.js");
+
 const BASE_URL = "https://minia2a.uk";
 
 async function fetchJSON(path) {
   const url = `${BASE_URL}${path}`;
   try {
-    const res = await fetch(url);
+    const res = await fetch(url, { headers: _identityHeaders(url) });
     if (!res.ok) {
       throw new Error(`HTTP ${res.status} from ${url}`);
     }
@@ -213,7 +215,7 @@ async function trial(serviceId, flags = []) {
   console.log("  Trying now...\n");
   try {
     const start = Date.now();
-    const res = await fetch(url, { headers });
+    const res = await fetch(url, { headers: { ..._identityHeaders(url), ...headers } });
     const elapsed = Date.now() - start;
     const body = await res.text();
     const preview = body.length > 300 ? body.slice(0, 300) + "..." : body;
