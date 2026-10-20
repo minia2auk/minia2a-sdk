@@ -1,6 +1,6 @@
 # @minia2a/sdk
 
-The marketplace companion for [@x402/express](https://www.npmjs.com/package/@x402/express) — discover, list, and trial 1,680+ agent-to-agent services from the command line.
+The marketplace companion for [@x402/express](https://www.npmjs.com/package/@x402/express) — discover, list, and call 1,700+ agent-to-agent services from the command line, with free trials on most of them.
 
 ```bash
 npm install -g @minia2a/sdk
@@ -28,7 +28,7 @@ minia2a register
 |---------|-------------|
 | `minia2a discover <query>` | Search 1,680+ services by keyword |
 | `minia2a list` | Show top 20 most-used services |
-| `minia2a trial <id>` | Call a service's free trial endpoint |
+| `minia2a trial <id>` | Call a trial-eligible service's free trial endpoint |
 | `minia2a register` | Register a wallet for publishing (trials need no registration) |
 | `minia2a publish` | List your x402 endpoint on the marketplace |
 
