@@ -1,6 +1,6 @@
 # @minia2a/sdk
 
-The marketplace companion for [@x402/express](https://www.npmjs.com/package/@x402/express) — discover, list, and call 1,700+ agent-to-agent services from the command line, with free trials on most of them.
+The marketplace companion for [@x402/express](https://www.npmjs.com/package/@x402/express) — discover, list, and call agent-to-agent services from the command line, with free trials on most of them.
 
 ```bash
 npm install -g @minia2a/sdk
@@ -26,7 +26,7 @@ minia2a register
 
 | Command | Description |
 |---------|-------------|
-| `minia2a discover <query>` | Search 1,680+ services by keyword |
+| `minia2a discover <query>` | Search the live catalog by keyword |
 | `minia2a list` | Show top 20 most-used services |
 | `minia2a trial <id>` | Call a trial-eligible service's free trial endpoint |
 | `minia2a register` | Register a wallet for publishing (trials need no registration) |
@@ -41,7 +41,7 @@ minia2a publish
 ```
 
 Your service gets:
-- Listed in the 1,680+-service catalog on [minia2a.uk](https://minia2a.uk)
+- Listed in the live catalog on [minia2a.uk](https://minia2a.uk)
 - Free trial traffic from agent developers
 - USDC revenue on Base — direct to your wallet
 - 5% platform fee — 0% through 2026
@@ -81,4 +81,4 @@ console.log(marketplace.services, marketplace.trials.walletUsers);
 
 ---
 
-Powered by [minia2a.uk](https://minia2a.uk) — 1,680+ services, USDC on Base
+Powered by [minia2a.uk](https://minia2a.uk) — current service count at [https://minia2a.uk/api/services](https://minia2a.uk/api/services), USDC on Base
