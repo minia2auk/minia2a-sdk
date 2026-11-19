@@ -45,7 +45,7 @@ function usage() {
   minia2a <command> [args]
 
   Commands:
-    discover <query>   Search the 1,680+-service marketplace
+    discover <query>   Search the live service marketplace
     list               Show popular x402 services
     trial <service>    Get trial instructions for a service
     register           Register a wallet for publishing (trials need none)
@@ -282,7 +282,7 @@ async function publish() {
 ║      }'                                                      ║
 ║                                                              ║
 ║  Your service gets:                                          ║
-║  • Listed in the 1,680+-service catalog                      ║
+║  • Listed in the live service catalog                       ║
 ║  • Free trial traffic from agent developers                  ║
 ║  • USDC revenue on Base — direct to your wallet              ║
 ║  • 5% platform fee — 0% through 2026                         ║
